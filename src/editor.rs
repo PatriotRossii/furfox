@@ -1,6 +1,6 @@
 use std::io::{Write, stdout};
 
-use crossterm::{ExecutableCommand, event::{KeyEvent, read}, terminal};
+use crossterm::{ExecutableCommand, cursor::{self}, event::{KeyEvent, read}, execute, terminal};
 use crossterm::{
     event::{Event, KeyModifiers},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -32,9 +32,14 @@ impl Editor {
 
     fn refresh_screen(&self) -> Result<(), ErrorKind> {
         let mut stdout = stdout();
+        
         stdout.execute(terminal::Clear(terminal::ClearType::All))?;
-        stdout.flush().map_err(ErrorKind::IoError)?;
-        Ok(())
+        stdout.execute(cursor::MoveTo(0, 0))?;
+
+        if self.should_quit {
+            println!("Goodbye.\r");
+        }
+        stdout.flush().map_err(ErrorKind::IoError)
     }
 
     fn process_keypress(&mut self) -> Result<(), ErrorKind> {
@@ -63,7 +68,9 @@ impl Default for Editor {
 }
 
 fn die(e: &ErrorKind) {
-    eprintln!("error: {:?}", e);
+    execute!(stdout(), terminal::Clear(terminal::ClearType::All)).unwrap();
     disable_raw_mode().unwrap();
+
+    eprintln!("error: {:?}", e);
     std::process::exit(1);
 }
