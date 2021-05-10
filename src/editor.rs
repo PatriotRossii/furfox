@@ -1,6 +1,6 @@
-use crossterm::event::read;
+use crossterm::event::{KeyEvent, read};
 use crossterm::{
-    event::{Event, KeyCode, KeyModifiers},
+    event::{Event, KeyModifiers},
     terminal::{disable_raw_mode, enable_raw_mode},
     ErrorKind,
 };
@@ -14,28 +14,27 @@ impl Editor {
         }
 
         loop {
-            match read() {
-                Ok(event) => if let Event::Key(e) = event {
-                    if let KeyCode::Char(c) = e.code {
-                        if c.is_control() {
-                            println!("{:?}\r", c as u8);
-                        } else {
-                            println!("{:?} ({})\r", c as u8, c);
-                        }
-
-                        if c == 'q' && e.modifiers == KeyModifiers::CONTROL {
-                            break;
-                        }
-                    } else {
-                        println!("{:?}\r", e.code);
-                    }
-                }
-                Err(ref e) => die(e),
+            if let Err(ref error) = Self::process_keypress() {
+                die(error);
             }
         }
+    }
 
-        if let Err(ref e) = disable_raw_mode() {
-            die(e);
+    fn process_keypress() -> Result<(), ErrorKind> {
+        let pressed_key = Self::read_key()?;
+
+        Ok(match pressed_key.modifiers {
+            KeyModifiers::CONTROL => panic!("Program end"),
+            _ => {}
+        })
+    }
+
+    fn read_key() -> Result<KeyEvent, ErrorKind> {
+        loop {
+            let event = read()?;
+            if let Event::Key(e) = event {
+                return Ok(e);
+            }
         }
     }
 }
@@ -48,5 +47,6 @@ impl Default for Editor {
 
 fn die(e: &ErrorKind) {
     eprintln!("error: {:?}", e);
+    disable_raw_mode().unwrap();
     std::process::exit(1);
 }
