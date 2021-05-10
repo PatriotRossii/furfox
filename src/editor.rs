@@ -8,36 +8,33 @@ use crossterm::{
 pub struct Editor {}
 
 impl Editor {
-    pub fn run(&self) {
-        if let Err(e) = enable_raw_mode() {
+    pub fn run() {
+        if let Err(ref e) = enable_raw_mode() {
             die(e);
         }
 
         loop {
             match read() {
-                Ok(event) => match event {
-                    Event::Key(e) => {
-                        if let KeyCode::Char(c) = e.code {
-                            if c.is_control() {
-                                println!("{:?}\r", c as u8);
-                            } else {
-                                println!("{:?} ({})\r", c as u8, c);
-                            }
-
-                            if c == 'q' && e.modifiers == KeyModifiers::CONTROL {
-                                break;
-                            }
+                Ok(event) => if let Event::Key(e) = event {
+                    if let KeyCode::Char(c) = e.code {
+                        if c.is_control() {
+                            println!("{:?}\r", c as u8);
                         } else {
-                            println!("{:?}\r", e.code);
+                            println!("{:?} ({})\r", c as u8, c);
                         }
+
+                        if c == 'q' && e.modifiers == KeyModifiers::CONTROL {
+                            break;
+                        }
+                    } else {
+                        println!("{:?}\r", e.code);
                     }
-                    _ => {}
-                },
-                Err(e) => die(e),
+                }
+                Err(ref e) => die(e),
             }
         }
 
-        if let Err(e) = disable_raw_mode() {
+        if let Err(ref e) = disable_raw_mode() {
             die(e);
         }
     }
@@ -49,7 +46,7 @@ impl Default for Editor {
     }
 }
 
-fn die(e: ErrorKind) {
+fn die(e: &ErrorKind) {
     eprintln!("error: {:?}", e);
     std::process::exit(1);
 }

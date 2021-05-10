@@ -1,8 +1,9 @@
+#![warn(clippy::all, clippy::pedantic)]
+
 use editor::Editor;
 
 pub mod editor;
 
 fn main() {
-    let editor = Editor::default();
-    editor.run();
+    Editor::run();
 }
