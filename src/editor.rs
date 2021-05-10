@@ -1,4 +1,6 @@
-use crossterm::event::{KeyEvent, read};
+use std::io::{Write, stdout};
+
+use crossterm::{ExecutableCommand, event::{KeyEvent, read}, terminal};
 use crossterm::{
     event::{Event, KeyModifiers},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -16,6 +18,9 @@ impl Editor {
         }
 
         loop {
+            if let Err(ref error) = self.refresh_screen() {
+                die(error);
+            }
             if let Err(ref error) = self.process_keypress() {
                 die(error);
             }
@@ -23,6 +28,13 @@ impl Editor {
                 break;
             }
         }
+    }
+
+    fn refresh_screen(&self) -> Result<(), ErrorKind> {
+        let mut stdout = stdout();
+        stdout.execute(terminal::Clear(terminal::ClearType::All))?;
+        stdout.flush().map_err(ErrorKind::IoError)?;
+        Ok(())
     }
 
     fn process_keypress(&mut self) -> Result<(), ErrorKind> {
