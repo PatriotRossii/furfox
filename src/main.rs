@@ -5,5 +5,5 @@ use editor::Editor;
 pub mod editor;
 
 fn main() {
-    Editor::run();
+    Editor::default().run();
 }

@@ -5,26 +5,31 @@ use crossterm::{
     ErrorKind,
 };
 
-pub struct Editor {}
+pub struct Editor {
+    should_quit: bool,
+}
 
 impl Editor {
-    pub fn run() {
+    pub fn run(&mut self) {
         if let Err(ref e) = enable_raw_mode() {
             die(e);
         }
 
         loop {
-            if let Err(ref error) = Self::process_keypress() {
+            if let Err(ref error) = self.process_keypress() {
                 die(error);
+            }
+            if self.should_quit {
+                break;
             }
         }
     }
 
-    fn process_keypress() -> Result<(), ErrorKind> {
+    fn process_keypress(&mut self) -> Result<(), ErrorKind> {
         let pressed_key = Self::read_key()?;
 
         Ok(match pressed_key.modifiers {
-            KeyModifiers::CONTROL => panic!("Program end"),
+            KeyModifiers::CONTROL => self.should_quit = true,
             _ => {}
         })
     }
@@ -41,7 +46,7 @@ impl Editor {
 
 impl Default for Editor {
     fn default() -> Self {
-        Self {}
+        Self { should_quit: false }
     }
 }
 
